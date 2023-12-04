@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app  # Deployment name
+spec:
+  replicas: 1  # Number of replicas
+  selector:
+    matchLabels:
+      app: web-app  # Label selector
+  template:
+    metadata:
+      labels:
+        app: web-app  # Label for pods
+    spec:
+      containers:
+      - name: web-app
+        # image: py-test-image:tag          # image from docker context
+        image: ibrezm1/test-kube-img:tag1  # Updated to use Docker Hub image
+        ports:
+        - containerPort: 5000  # Container port
+        env:
+        - name: SECRET_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: web-app-secret
+              key: username
+        - name: SECRET_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: web-app-secret
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-service  # Service name
+spec:
+  selector:
+    app: web-app
+  ports:
+    - protocol: TCP
+      port: 5001  # External port visible
+      targetPort: 5000  # Internal Container port 
+  type: NodePort  # Service type
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: web-app-secret  # Secret name
+type: Opaque
+data:
+  username: dGVzdHVzZXI=  # Base64-encoded username
+  password: dGVzdHBhc3M=  # Base64-encoded password
